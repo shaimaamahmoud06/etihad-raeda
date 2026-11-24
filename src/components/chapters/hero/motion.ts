@@ -4,8 +4,14 @@ import { duration, ease, stagger, distance } from "@/design/motion";
 import { hero } from "@/content/pages/home";
 import { gsap, scheduleRefresh } from "@/motion/engine";
 import { introDelay } from "@/motion/intro";
-import { WalkPlayer, variantFor } from "@/motion/hero-walk";
+import { WalkPlayer, variantFor, type Manifest } from "@/motion/hero-walk";
 import { walk as walkCfg } from "@/design/motion";
+// The frame lists ship with the page's code, so the first frames are requested without waiting
+// for a manifest round trip. Every deploy rebuilds, so a re-export is still picked up.
+import desktopManifest from "../../../../public/hero/desktop/manifest.json";
+import phoneManifest from "../../../../public/hero/phone/manifest.json";
+
+const manifests = { desktop: desktopManifest as Manifest, phone: phoneManifest as Manifest };
 
 /* Hero entrance after the intro, then the walk: the scroll through the tall scene drives the
    frame player and one scrubbed timeline for the overlays (give-way, room labels, end card). */
@@ -42,9 +48,11 @@ export function heroMotion(section: HTMLElement) {
   let progress = 0;
   let near = true;
   const makePlayer = () => {
+    const variant = variantFor();
     const p = new WalkPlayer(canvas, {
       base: w.base,
-      variant: variantFor(),
+      variant,
+      manifest: manifests[variant],
       onFirstFrame: () => gsap.to(canvas, { opacity: 1, duration: 0.6, ease: "power2.out" }),
     });
     p.setProgress(progress, true);

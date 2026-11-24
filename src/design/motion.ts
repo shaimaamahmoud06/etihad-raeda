@@ -85,8 +85,9 @@ export const intro = {
 export const walk = {
   /** Eased glide toward the scroll position, as a time constant in ms. */
   glideMs: 90,
-  /** Downloads in flight at once, and attempts per frame. */
-  concurrency: 6,
+  /** Downloads in flight at once, and attempts per frame. Frames are small (15–70 KB), so the wait
+      per request, not the size, sets the pace; HTTP/2 carries many at once on one connection. */
+  concurrency: { desktop: 16, phone: 12 },
   retries: 3,
   /** Frames kept decoded around the position, in the scroll direction. */
   decodeAhead: 14,

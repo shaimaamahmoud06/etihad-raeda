@@ -25,7 +25,7 @@ import { walk as cfg } from "@/design/motion";
 
 export type Variant = "desktop" | "phone";
 
-type Manifest = {
+export type Manifest = {
   variant: Variant;
   width: number;
   height: number;
@@ -65,6 +65,8 @@ export class WalkPlayer {
   private onFirstFrame?: () => void;
   private budget: number;
   private maxDecoding: number;
+  private maxFetching: number;
+  private bundled?: Manifest;
 
   private manifest: Manifest | null = null;
   private ext: "avif" | "webp" = "avif";
@@ -96,7 +98,7 @@ export class WalkPlayer {
   private announced = false;
   private resizeObs: ResizeObserver;
 
-  constructor(canvas: HTMLCanvasElement, opts: { base: string; variant: Variant; onFirstFrame?: () => void }) {
+  constructor(canvas: HTMLCanvasElement, opts: { base: string; variant: Variant; manifest?: Manifest; onFirstFrame?: () => void }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d", { alpha: false })!;
     this.base = opts.base;
@@ -105,13 +107,17 @@ export class WalkPlayer {
     const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     this.budget = memory !== undefined && memory <= 4 ? cfg.decodedBudget.lowMemory : cfg.decodedBudget[opts.variant];
     this.maxDecoding = cfg.decodeConcurrency[opts.variant];
+    this.maxFetching = cfg.concurrency[opts.variant];
+    this.bundled = opts.manifest;
     this.resizeObs = new ResizeObserver(() => this.resize());
     this.resizeObs.observe(canvas);
   }
 
   async start() {
+    // The frame list is bundled with the page (no round trip); fetched only if it wasn't.
     const [manifest, avif] = await Promise.all([
-      fetch(`${this.base}/${this.variant}/manifest.json`, { signal: this.aborter.signal }).then((r) => r.json() as Promise<Manifest>),
+      this.bundled ??
+        fetch(`${this.base}/${this.variant}/manifest.json`, { signal: this.aborter.signal }).then((r) => r.json() as Promise<Manifest>),
       supportsAvif(),
     ]).catch(() => [null, false] as const);
     if (!manifest || this.destroyed) return;
@@ -212,7 +218,7 @@ export class WalkPlayer {
   }
 
   private pump() {
-    while (!this.destroyed && this.manifest && this.inFlight < cfg.concurrency) {
+    while (!this.destroyed && this.manifest && this.inFlight < this.maxFetching) {
       const next = this.pickNext();
       if (!next) return;
       // Off screen, only urgent frames are fetched (none, once the window is loaded).
