@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 
 /* The 3D-chair film (§16): pre-rendered, transparent, not a live model.
    .mov (HEVC with alpha) for Safari and every iPhone browser, .webm (VP9 with alpha) for the rest.
-   The Full cut is used, not the Zoom cut: the Zoom's ending crops to a narrow strip of fabric
-   at the frame's edge, so the section read as empty on every screen. The Full cut keeps the
-   whole chair in frame through the half turn (the tag close-up is the trade-off).
+   The Zoom cut is used, as she chose: the half turn, then the camera pushes in on the small
+   dark "MADE IN ITALY" tag. The ending crops close on the tag, so only part of the chair is in
+   view at the last frame — that is the look she wants.
    It plays when it scrolls into view, muted and inline, and replays each time it re-enters;
    pausing when it leaves keeps it from finishing unseen.
    Reduced motion and Save-Data get a still of the chair.
@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
    as soon as enough is buffered to run without stalling; iPhones don't buffer muted video ahead
    of play, so after a short wait it plays anyway. */
 
-const SRC = "/chair/chair-full";
+const SRC = "/chair/chair-zoom";
 /** Start loading when the chair is this close to the screen. */
 const NEAR = "150% 0px";
 /** How long to wait for a full buffer before playing anyway (iPhones never report one early). */
