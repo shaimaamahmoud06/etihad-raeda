@@ -1,0 +1,121 @@
+/* Design tokens: colours, tones, font mapping, type scale, spacing, intro timing.
+   Edit values in place. Every value here is [EDITABLE]. */
+
+:root {
+  /* Brand colours (§4.1) */
+  --c-ink: #0e2340;
+  --c-ink-deep: #081627;
+  --c-ink-line: #26406a;
+  --c-gold: #c9a877;
+  --c-stone: #f3eee6;
+  --c-stone-deep: #e8e0d3;
+  --c-walnut: #5a4636;
+  --c-oak: #8a857e;
+  --c-error: #8a2c1f;
+
+  /* Easing curves */
+  --ease-long: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-curtain: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Intro timing (§6.3) */
+  --intro-draw: 1.25s;
+  --intro-hold: 2.35s;
+  --intro-open: 1.2s;
+
+  /* Spacing */
+  --gutter: clamp(1.25rem, 5vw, 5rem);
+  --chapter-pad: clamp(6rem, 16vh, 11rem);
+  --header-h: 4.5rem;
+  --shell-max: 90rem;
+
+  /* Type scale: English */
+  --fs-hero: clamp(2.6rem, 6.6vw, 6.4rem);
+  --fs-h1: clamp(2.4rem, 5.4vw, 5.25rem);
+  --fs-h2: clamp(2rem, 4.2vw, 3.9rem);
+  --fs-h3: clamp(1.45rem, 2.2vw, 2.1rem);
+  --fs-lead: clamp(1.05rem, 1.35vw, 1.3rem);
+  --fs-body: 1rem;
+  --lh-body: 1.7;
+  --lh-display: 1.04;
+  --lh-hero: 1.04;
+  --lh-h3: 1.15;
+  --lh-lead: 1.7;
+  --tracking-display: -0.012em;
+
+  /* Fonts (variables come from next/font, attached to <html>) */
+  --ff-display: var(--font-cormorant), "Iowan Old Style", "Times New Roman", serif;
+  --ff-body: var(--font-montserrat), system-ui, sans-serif;
+  --ff-label: var(--font-montserrat), system-ui, sans-serif;
+  /* The Latin wordmark lockup, as in the brand book (Helvetica Neue Light + Regular). */
+  --ff-lockup: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 5.25rem;
+  }
+}
+
+/* Arabic: display letters are wider and taller, so the scale is set smaller. */
+:root[lang="ar"] {
+  --fs-hero: clamp(2rem, 5.1vw, 4.8rem);
+  --fs-h1: clamp(1.9rem, 4.2vw, 4rem);
+  --fs-h2: clamp(1.65rem, 3.3vw, 3.1rem);
+  --fs-h3: clamp(1.2rem, 1.8vw, 1.65rem);
+  --fs-lead: clamp(1.1rem, 1.4vw, 1.35rem);
+  --fs-body: 1.0625rem;
+  --lh-body: 1.95;
+  --lh-display: 1.5;
+  --lh-hero: 1.42;
+  --lh-h3: 1.6;
+  --lh-lead: 1.95;
+  --tracking-display: 0;
+
+  --ff-display: var(--font-kufi), var(--font-plex-ar), "Geeza Pro", sans-serif;
+  --ff-body: var(--font-plex-ar), var(--font-montserrat), "Geeza Pro", sans-serif;
+  --ff-label: var(--font-plex-ar), "Geeza Pro", sans-serif;
+}
+
+/* Chapter colour schemes ("tones", §4.2). Each sets background, text and accent. */
+[data-tone="ink"] {
+  --tone-bg: var(--c-ink);
+  --tone-fg: var(--c-stone);
+  --tone-accent: var(--c-gold);
+}
+[data-tone="ink-deep"] {
+  --tone-bg: var(--c-ink-deep);
+  --tone-fg: var(--c-stone);
+  --tone-accent: var(--c-gold);
+}
+[data-tone="stone"] {
+  --tone-bg: var(--c-stone);
+  --tone-fg: var(--c-ink);
+  --tone-accent: var(--c-walnut);
+}
+[data-tone="stone-deep"] {
+  --tone-bg: var(--c-stone-deep);
+  --tone-fg: var(--c-ink);
+  --tone-accent: var(--c-walnut);
+}
+
+/* The previous chapter's colours, for the hand-off. */
+[data-prev-tone="ink"] {
+  --prev-bg: var(--c-ink);
+  --prev-fg: var(--c-stone);
+  --prev-accent: var(--c-gold);
+}
+[data-prev-tone="ink-deep"] {
+  --prev-bg: var(--c-ink-deep);
+  --prev-fg: var(--c-stone);
+  --prev-accent: var(--c-gold);
+}
+[data-prev-tone="stone"] {
+  --prev-bg: var(--c-stone);
+  --prev-fg: var(--c-ink);
+  --prev-accent: var(--c-walnut);
+}
+[data-prev-tone="stone-deep"] {
+  --prev-bg: var(--c-stone-deep);
+  --prev-fg: var(--c-ink);
+  --prev-accent: var(--c-walnut);
+}
