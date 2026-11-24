@@ -5,6 +5,7 @@ import { hero } from "@/content/pages/home";
 import { gsap, scheduleRefresh } from "@/motion/engine";
 import { introDelay } from "@/motion/intro";
 import { WalkPlayer, variantFor } from "@/motion/hero-walk";
+import { walk as walkCfg } from "@/design/motion";
 
 /* Hero entrance after the intro, then the walk: the scroll through the tall scene drives the
    frame player and one scrubbed timeline for the overlays (give-way, room labels, end card). */
@@ -39,6 +40,7 @@ export function heroMotion(section: HTMLElement) {
 
   const w = hero.walk;
   let progress = 0;
+  let near = true;
   const makePlayer = () => {
     const p = new WalkPlayer(canvas, {
       base: w.base,
@@ -46,10 +48,22 @@ export function heroMotion(section: HTMLElement) {
       onFirstFrame: () => gsap.to(canvas, { opacity: 1, duration: 0.6, ease: "power2.out" }),
     });
     p.setProgress(progress, true);
+    p.setActive(near);
     p.start();
     return p;
   };
   let player = makePlayer();
+
+  // Frames load only while the walk is on or near the screen, so once a visitor has scrolled on,
+  // the rest of the page (the chair film, the photos) gets the bandwidth.
+  const nearObs = new IntersectionObserver(
+    ([e]) => {
+      near = e.isIntersecting;
+      player.setActive(near);
+    },
+    { rootMargin: walkCfg.nearMargin },
+  );
+  nearObs.observe(scene);
 
   // Turning a phone or resizing across portrait/landscape swaps the frame set.
   const orientation = matchMedia("(orientation: portrait)");
@@ -106,6 +120,7 @@ export function heroMotion(section: HTMLElement) {
 
   return () => {
     orientation.removeEventListener("change", onOrientation);
+    nearObs.disconnect();
     player.destroy();
   };
 }

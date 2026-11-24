@@ -91,8 +91,13 @@ export const walk = {
   /** Frames kept decoded around the position, in the scroll direction. */
   decodeAhead: 14,
   decodeBehind: 5,
-  /** Decoded frames kept at most before the farthest are released. */
-  decodedBudget: 32,
-  /** Pixel ratio cap for the canvas. */
+  /** Decodes running at once (each is a full image; more than this starves the scroll). */
+  decodeConcurrency: { desktop: 3, phone: 2 },
+  /** Decoded frames kept at most before the farthest are released. Phones and low-memory
+      devices keep fewer so the tab is never killed for memory. */
+  decodedBudget: { desktop: 24, phone: 16, lowMemory: 12 },
+  /** Pixel ratio cap for the canvas. The canvas is also never larger than the frames themselves. */
   maxDpr: 2,
+  /** Start loading frames when the walk is this close to the screen; pause when it's farther. */
+  nearMargin: "100% 0px",
 };

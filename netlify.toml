@@ -1,0 +1,30 @@
+# Caching for the big, rarely-changing media (hero walk frames and the chair film).
+# Netlify's default makes browsers re-check every file on every visit; the walk alone is ~600 files.
+# A week fresh, then served from cache while re-checking in the background for a month.
+# The manifests (/hero/*/manifest.json) keep Netlify's default, so a re-export is picked up at once.
+# If a re-export ever changes frames without changing their names, bump the folder name instead.
+
+[[headers]]
+  for = "/hero/desktop/avif/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+[[headers]]
+  for = "/hero/desktop/webp/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+[[headers]]
+  for = "/hero/phone/avif/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+[[headers]]
+  for = "/hero/phone/webp/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+[[headers]]
+  for = "/chair/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
