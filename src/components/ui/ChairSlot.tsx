@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 /* The 3D-chair film (§16): pre-rendered, transparent, not a live model.
    .mov (HEVC with alpha) for Safari and every iPhone browser, .webm (VP9 with alpha) for the rest.
-   One cut for every screen: the half turn, then the push in to the "Made in Italy" tag, which ends
-   at the frame's right edge (the layout sets that edge flush with the screen's).
-   It plays once when it scrolls into view, muted and inline, and stays on its last frame.
-   Reduced motion and Save-Data get a still of that last frame. */
+   The Full cut is used, not the Zoom cut: the Zoom's ending crops to a narrow strip of fabric
+   at the frame's edge, so the section read as empty on every screen. The Full cut keeps the
+   whole chair in frame through the half turn (the tag close-up is the trade-off).
+   It plays when it scrolls into view, muted and inline, and replays each time it re-enters;
+   pausing when it leaves keeps it from finishing unseen.
+   Reduced motion and Save-Data get a still of the chair. */
 
-const SRC = "/chair/chair-zoom";
+const SRC = "/chair/chair-full";
 
 export function ChairSlot({ label, className = "" }: { label: string; className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -31,8 +33,10 @@ export function ChairSlot({ label, className = "" }: { label: string; className?
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
+          v.currentTime = 0;
           v.play().catch(() => {});
-          io.disconnect();
+        } else {
+          v.pause();
         }
       },
       { threshold: 0.4 },

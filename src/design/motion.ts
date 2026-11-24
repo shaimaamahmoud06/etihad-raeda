@@ -62,8 +62,9 @@ export const lenis = {
 /** Scroll scene lengths, in multiples of the screen height. */
 export const scene = {
   /** The hero walk: a tall section holding a sticky one-screen stage. The walk itself is scrolled
-      over (heroWalk - 1) screens: 7.5 (the first cut was 4.5), so each room has time to be seen. */
-  heroWalk: 8.5,
+      over (heroWalk - 1) screens: 4.5. (Was 7.5 — a short scroll then showed no change, so the
+      walk read as stuck on every phone.) */
+  heroWalk: 5.5,
   auditBureau: 2.8,
   drawing: 4.2,
   broadening: 2.6,
