@@ -81,24 +81,31 @@ export const intro = {
   safetyMs: 8000,
 };
 
-/** The hero walk player (§16, web/hero/README.md). */
+/** The hero walk player (§16, web/hero/README.md; how it loads: src/motion/hero-walk-loader.ts). */
 export const walk = {
-  /** Eased glide toward the scroll position, as a time constant in ms. */
+  /** Eased glide toward the scroll position, as a time constant in ms. The picture and the overlays
+      (give-way, room labels, lines, end card) all follow this one glided position. */
   glideMs: 90,
-  /** Downloads in flight at once, and attempts per frame. Frames are small (15–70 KB), so the wait
-      per request, not the size, sets the pace; HTTP/2 carries many at once on one connection. */
-  concurrency: { desktop: 16, phone: 12 },
+  /** Downloads in flight. The background fill keeps a few going; frames needed right now get extra
+      "urgent" slots on top, so they never queue behind the fill. A handful in flight already fills
+      the line; more only make the urgent ones wait. */
+  fetch: { background: { desktop: 6, phone: 4 }, urgent: 4 },
+  /** Attempts per frame before it is left for a few seconds. */
   retries: 3,
-  /** Frames kept decoded around the position, in the scroll direction. */
-  decodeAhead: 14,
-  decodeBehind: 5,
-  /** Decodes running at once (each is a full image; more than this starves the scroll). */
+  /** Decodes running at once (each is a full frame; more than this starves the scroll). */
   decodeConcurrency: { desktop: 3, phone: 2 },
-  /** Decoded frames kept at most before the farthest are released. Phones and low-memory
-      devices keep fewer so the tab is never killed for memory. */
-  decodedBudget: { desktop: 24, phone: 16, lowMemory: 12 },
+  /** Decoded frames kept at most (about 8 MB each). Phones and low-memory devices keep fewer, so
+      the tab is never killed for memory. */
+  decodedBudget: { desktop: 28, phone: 16, lowMemory: 10 },
+  /** A frame that isn't ready yet is shown as a cross-fade of the nearest ready frames on either
+      side, if they are at most this many positions apart; farther apart, the nearer one is shown. */
+  blendGap: 16,
+  /** Without smooth scroll (touch, keyboard, scrollbar), how far ahead a moving scroll is
+      predicted, in seconds. The frames on the way there are loaded first. */
+  lookaheadS: 0.35,
   /** Pixel ratio cap for the canvas. The canvas is also never larger than the frames themselves. */
   maxDpr: 2,
-  /** Start loading frames when the walk is this close to the screen; pause when it's farther. */
+  /** Load frames when the walk is this close to the screen; farther away, downloads pause and
+      decoded frames are released (the canvas keeps its last picture). */
   nearMargin: "100% 0px",
 };
