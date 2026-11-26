@@ -1,11 +1,11 @@
 "use client";
 
-import { duration, ease, stagger, distance } from "@/design/motion";
+import { duration, ease, stagger, distance, walk as walkCfg } from "@/design/motion";
 import { hero } from "@/content/pages/home";
-import { gsap, scheduleRefresh } from "@/motion/engine";
+import { gsap, ScrollTrigger, scheduleRefresh } from "@/motion/engine";
 import { introDelay } from "@/motion/intro";
+import { getLenis } from "@/motion/lenis-store";
 import { WalkPlayer, variantFor, type Manifest } from "@/motion/hero-walk";
-import { walk as walkCfg } from "@/design/motion";
 // The frame lists ship with the page's code, so the first frames are requested without waiting
 // for a manifest round trip. Every deploy rebuilds, so a re-export is still picked up.
 import desktopManifest from "../../../../public/hero/desktop/manifest.json";
@@ -13,8 +13,9 @@ import phoneManifest from "../../../../public/hero/phone/manifest.json";
 
 const manifests = { desktop: desktopManifest as Manifest, phone: phoneManifest as Manifest };
 
-/* Hero entrance after the intro, then the walk: the scroll through the tall scene drives the
-   frame player and one scrubbed timeline for the overlays (give-way, room labels, end card). */
+/* Hero entrance after the intro, then the walk: the scroll through the tall scene drives the frame
+   player, and the player's glided position drives one timeline for the overlays (give-way, room
+   labels, lines, end card), so the words move exactly with the picture. */
 export function heroMotion(section: HTMLElement) {
   const delay = introDelay();
   const words = section.querySelectorAll("[data-word]");
@@ -45,56 +46,9 @@ export function heroMotion(section: HTMLElement) {
   }
 
   const w = hero.walk;
-  let progress = 0;
-  let near = true;
-  const makePlayer = () => {
-    const variant = variantFor();
-    const p = new WalkPlayer(canvas, {
-      base: w.base,
-      variant,
-      manifest: manifests[variant],
-      onFirstFrame: () => gsap.to(canvas, { opacity: 1, duration: 0.6, ease: "power2.out" }),
-    });
-    p.setProgress(progress, true);
-    p.setActive(near);
-    p.start();
-    return p;
-  };
-  let player = makePlayer();
 
-  // Frames load only while the walk is on or near the screen, so once a visitor has scrolled on,
-  // the rest of the page (the chair film, the photos) gets the bandwidth.
-  const nearObs = new IntersectionObserver(
-    ([e]) => {
-      near = e.isIntersecting;
-      player.setActive(near);
-    },
-    { rootMargin: walkCfg.nearMargin },
-  );
-  nearObs.observe(scene);
-
-  // Turning a phone or resizing across portrait/landscape swaps the frame set.
-  const orientation = matchMedia("(orientation: portrait)");
-  const onOrientation = () => {
-    player.destroy();
-    gsap.set(canvas, { opacity: 0 });
-    player = makePlayer();
-  };
-  orientation.addEventListener("change", onOrientation);
-
-  const walk = gsap.timeline({
-    defaults: { ease: "none" },
-    scrollTrigger: {
-      trigger: scene,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: true,
-      onUpdate: (self) => {
-        progress = self.progress;
-        player.setProgress(progress);
-      },
-    },
-  });
+  // The overlays, on a paused timeline the player moves (0 to 1 over the walk).
+  const walk = gsap.timeline({ paused: true, defaults: { ease: "none" } });
   walk.to({}, { duration: 1 }, 0);
 
   // The headline and buttons give way over the first 10% of the walk.
@@ -125,6 +79,75 @@ export function heroMotion(section: HTMLElement) {
   // From 92%: the end line and the button on the clear end wall.
   const end = section.querySelector<HTMLElement>("[data-hero-end]");
   if (end) walk.fromTo(end, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.04, ease: "power2.out" }, w.endFrom);
+
+  // Where smooth scroll is taking the page, as progress through the walk, so the frames on the way
+  // are decoded before they're needed. null when it isn't animating (touch, keyboard, scrollbar):
+  // the player then predicts from the speed.
+  const st: { trigger?: ScrollTrigger } = {};
+  const heading = () => {
+    const lenis = getLenis();
+    const trigger = st.trigger;
+    if (!trigger || !lenis || lenis.isScrolling !== "smooth") return null;
+    const span = trigger.end - trigger.start;
+    return span > 0 ? gsap.utils.clamp(0, 1, (lenis.targetScroll - trigger.start) / span) : null;
+  };
+
+  let progress = 0;
+  let near = true;
+  const makePlayer = () => {
+    const variant = variantFor();
+    const p = new WalkPlayer(canvas, {
+      base: w.base,
+      variant,
+      manifest: manifests[variant],
+      onProgress: (x) => walk.progress(x),
+      heading,
+      onFirstFrame: () => gsap.to(canvas, { opacity: 1, duration: 0.6, ease: "power2.out" }),
+    });
+    p.setProgress(progress, true);
+    p.setActive(near);
+    void p.start();
+    return p;
+  };
+  let player = makePlayer();
+
+  // The scroll through the tall scene. The first measure jumps straight to where the page is;
+  // after that, the player glides.
+  let measured = false;
+  st.trigger = ScrollTrigger.create({
+    trigger: scene,
+    start: "top top",
+    end: "bottom bottom",
+    onUpdate: (self) => {
+      progress = self.progress;
+      player.setProgress(progress);
+    },
+    onRefresh: (self) => {
+      progress = self.progress;
+      player.setProgress(progress, !measured);
+      measured = true;
+    },
+  });
+
+  // Frames load only while the walk is on or near the screen, so once a visitor has scrolled on,
+  // the rest of the page (the chair film, the photos) gets the bandwidth and the memory.
+  const nearObs = new IntersectionObserver(
+    ([e]) => {
+      near = e.isIntersecting;
+      player.setActive(near);
+    },
+    { rootMargin: walkCfg.nearMargin },
+  );
+  nearObs.observe(scene);
+
+  // Turning a phone or resizing across portrait/landscape swaps the frame set.
+  const orientation = matchMedia("(orientation: portrait)");
+  const onOrientation = () => {
+    player.destroy();
+    gsap.set(canvas, { opacity: 0 });
+    player = makePlayer();
+  };
+  orientation.addEventListener("change", onOrientation);
 
   return () => {
     orientation.removeEventListener("change", onOrientation);
